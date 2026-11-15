@@ -1,0 +1,4 @@
+This Is A Tool For SQL Injection Testing And Ethical Use Please Use On Targets With Authorized Use
+
+Dont Bind Vuln Server On 0.0.0.0 Or A Public IP Only Bind On Loopback
+

